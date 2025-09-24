@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { transcribeAudio, translateText } from './services/geminiService';
+import { processAudio } from './services/geminiService';
 import FileUpload from './components/FileUpload';
 import ResultCard from './components/ResultCard';
 import Loader from './components/Loader';
@@ -36,29 +36,24 @@ const App: React.FC = () => {
     setError(null);
     setTranscribedText('');
     setTranslatedText('');
+    setStatusMessage('Procesando audio... (esto puede tardar unos momentos)');
 
     try {
-      setStatusMessage('Convirtiendo archivo de audio...');
       const reader = new FileReader();
       reader.readAsDataURL(audioFile);
       reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(',')[1];
-
         try {
-          setStatusMessage('Transcribiendo audio... (esto puede tardar unos momentos)');
-          const transcription = await transcribeAudio(base64Audio, audioFile.type);
+          const base64Audio = (reader.result as string).split(',')[1];
+          const { transcription, translation } = await processAudio(base64Audio, audioFile.type);
+          
           setTranscribedText(transcription);
-
-          setStatusMessage('Traduciendo texto a español...');
-          const translation = await translateText(transcription, 'Español');
           setTranslatedText(translation);
-
-          setStatusMessage('');
-        } catch (apiError) {
+        } catch (apiError: any) {
           console.error('API Error:', apiError);
-          setError('Ocurrió un error al procesar el audio. Por favor, inténtalo de nuevo.');
+          setError(apiError.message || 'Ocurrió un error al procesar el audio. Por favor, inténtalo de nuevo.');
         } finally {
           setIsLoading(false);
+          setStatusMessage('');
         }
       };
       reader.onerror = () => {

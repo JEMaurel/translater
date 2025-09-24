@@ -1,50 +1,30 @@
-
-import { GoogleGenAI } from "@google/genai";
-
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
+export interface ProcessAudioResponse {
+  transcription: string;
+  translation: string;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const model = 'gemini-2.5-flash';
-
-export const transcribeAudio = async (base64Audio: string, mimeType: string): Promise<string> => {
+export const processAudio = async (base64Audio: string, mimeType: string): Promise<ProcessAudioResponse> => {
   try {
-    const audioPart = {
-      inlineData: {
-        data: base64Audio,
-        mimeType: mimeType,
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    };
-
-    const textPart = {
-      text: "Transcribe el texto de este archivo de audio. Responde únicamente con el texto transcrito.",
-    };
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: { parts: [audioPart, textPart] },
-    });
-    
-    return response.text;
-  } catch (error) {
-    console.error("Error during transcription:", error);
-    throw new Error("Failed to transcribe audio.");
-  }
-};
-
-export const translateText = async (text: string, targetLanguage: string): Promise<string> => {
-  try {
-    const prompt = `Traduce el siguiente texto a ${targetLanguage}. Responde únicamente con la traducción, sin añadir explicaciones adicionales o texto introductorio.\n\nTexto a traducir:\n"${text}"`;
-    
-    const response = await ai.models.generateContent({
-        model: model,
-        contents: prompt
+      body: JSON.stringify({ base64Audio, mimeType }),
     });
 
-    return response.text;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error en el servidor al procesar el audio.');
+    }
+
+    const data: ProcessAudioResponse = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error during translation:", error);
-    throw new Error("Failed to translate text.");
+    console.error("Error processing audio:", error);
+    if (error instanceof Error) {
+      throw new Error(`No se pudo comunicar con el servidor de traducción: ${error.message}`);
+    }
+    throw new Error("No se pudo comunicar con el servidor de traducción.");
   }
 };
