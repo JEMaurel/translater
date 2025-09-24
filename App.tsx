@@ -6,6 +6,9 @@ import Loader from './components/Loader';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
+const MAX_FILE_SIZE_MB = 3;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 const App: React.FC = () => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [transcribedText, setTranscribedText] = useState<string>('');
@@ -15,14 +18,33 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (file: File | null) => {
-    if (file && (file.type.startsWith('audio/') || file.type.startsWith('video/'))) {
+    // Reset results whenever a new file is chosen
+    setTranscribedText('');
+    setTranslatedText('');
+
+    if (file) {
+      if (!file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+        setAudioFile(null);
+        setError('Por favor, selecciona un archivo de audio o video válido (ej. MP3, MP4).');
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setAudioFile(null);
+        setError(`El archivo es demasiado grande. El tamaño máximo es de ${MAX_FILE_SIZE_MB} MB.`);
+        return;
+      }
+      // If all checks pass
       setAudioFile(file);
       setError(null);
-      setTranscribedText('');
-      setTranslatedText('');
     } else {
       setAudioFile(null);
-      setError('Por favor, selecciona un archivo de audio o video válido (ej. MP3, MP4).');
+      // Set a generic error if the file is invalid, but not if it was just cleared.
+      // The FileUpload component sends null for invalid types.
+      if (file === null) {
+         setError('Por favor, selecciona un archivo de audio o video válido (ej. MP3, MP4).');
+      } else {
+         setError(null);
+      }
     }
   };
 

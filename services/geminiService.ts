@@ -14,8 +14,22 @@ export const processAudio = async (base64Audio: string, mimeType: string): Promi
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Error en el servidor al procesar el audio.');
+      let errorMessage;
+      const contentType = response.headers.get('content-type');
+
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || 'Error en el servidor al procesar el audio.';
+      } else {
+        const errorText = await response.text();
+        console.error("Server Error Text:", errorText);
+        if (response.status === 413 || errorText.includes('Payload Too Large')) {
+            errorMessage = 'El archivo enviado es demasiado grande para el servidor.';
+        } else {
+            errorMessage = `Error del servidor (${response.status}).`;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     const data: ProcessAudioResponse = await response.json();
