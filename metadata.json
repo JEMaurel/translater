@@ -1,5 +1,5 @@
 {
-  "name": "AI Audio Translator",
-  "description": "An application to upload an audio file (e.g., MP3) in any language, and it will be transcribed and translated into Spanish using AI.",
+  "name": "AI Multimedia Translator",
+  "description": "An application to upload an audio or video file (e.g., MP3, MP4) in any language, and it will be transcribed and translated into Spanish using AI.",
   "requestFramePermissions": []
 }
