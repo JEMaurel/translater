@@ -11,7 +11,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, disabled }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = (file: File | undefined | null) => {
-    if (file && file.type.startsWith('audio/')) {
+    if (file && (file.type.startsWith('audio/') || file.type.startsWith('video/'))) {
       setFileName(file.name);
       onFileChange(file);
     } else {
@@ -73,13 +73,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, disabled }) => {
       aria-disabled={disabled}
       role="button"
       tabIndex={disabled ? -1 : 0}
-      aria-label="Área para subir archivos de audio"
+      aria-label="Área para subir archivos de audio o video"
     >
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileSelect}
-        accept="audio/*"
+        accept="audio/*,video/*"
         className="hidden"
         disabled={disabled}
       />
@@ -90,7 +90,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, disabled }) => {
         <p className="text-slate-400">
           <span className="font-semibold text-cyan-400">Haz clic para subir un archivo</span> o arrástralo aquí
         </p>
-        <p className="text-xs text-slate-500 mt-1">MP3, WAV, M4A, etc.</p>
+        <p className="text-xs text-slate-500 mt-1">MP3, WAV, MP4, MOV, etc.</p>
         {fileName && (
           <p className="mt-4 text-sm font-medium text-slate-300 bg-slate-700 px-3 py-1 rounded-full">
             {fileName}

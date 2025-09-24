@@ -39,12 +39,12 @@ export default async function handler(
     const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash';
 
-    // Step 1: Transcribe Audio
+    // Step 1: Transcribe Audio or Video
     const audioPart = {
       inlineData: { data: base64Audio, mimeType: mimeType },
     };
     const transcriptionPrompt = {
-      text: "Transcribe el texto de este archivo de audio. Responde únicamente con el texto transcrito.",
+      text: "Transcribe el texto de este archivo de audio o video. Responde únicamente con el texto transcrito.",
     };
     const transcriptionResponse = await ai.models.generateContent({
       model: model,
@@ -55,7 +55,7 @@ export default async function handler(
     if (!transcription || transcription.trim() === '') {
         // Handle cases where transcription might be empty
         return res.status(200).json({ 
-            transcription: '(No se detectó texto en el audio)', 
+            transcription: '(No se detectó texto en el archivo)', 
             translation: '(No se pudo traducir ya que no se detectó texto)' 
         });
     }

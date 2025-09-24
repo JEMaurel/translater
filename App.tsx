@@ -15,20 +15,20 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (file: File | null) => {
-    if (file && file.type.startsWith('audio/')) {
+    if (file && (file.type.startsWith('audio/') || file.type.startsWith('video/'))) {
       setAudioFile(file);
       setError(null);
       setTranscribedText('');
       setTranslatedText('');
     } else {
       setAudioFile(null);
-      setError('Por favor, selecciona un archivo de audio válido (ej. MP3, WAV).');
+      setError('Por favor, selecciona un archivo de audio o video válido (ej. MP3, MP4).');
     }
   };
 
   const handleTranslate = useCallback(async () => {
     if (!audioFile) {
-      setError('No se ha seleccionado ningún archivo de audio.');
+      setError('No se ha seleccionado ningún archivo.');
       return;
     }
 
@@ -36,7 +36,7 @@ const App: React.FC = () => {
     setError(null);
     setTranscribedText('');
     setTranslatedText('');
-    setStatusMessage('Procesando audio... (esto puede tardar unos momentos)');
+    setStatusMessage('Procesando archivo... (esto puede tardar unos momentos)');
 
     try {
       const reader = new FileReader();
@@ -50,14 +50,14 @@ const App: React.FC = () => {
           setTranslatedText(translation);
         } catch (apiError: any) {
           console.error('API Error:', apiError);
-          setError(apiError.message || 'Ocurrió un error al procesar el audio. Por favor, inténtalo de nuevo.');
+          setError(apiError.message || 'Ocurrió un error al procesar el archivo. Por favor, inténtalo de nuevo.');
         } finally {
           setIsLoading(false);
           setStatusMessage('');
         }
       };
       reader.onerror = () => {
-        setError('Error al leer el archivo de audio.');
+        setError('Error al leer el archivo.');
         setIsLoading(false);
       };
     } catch (err) {
@@ -66,6 +66,21 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [audioFile]);
+
+  const handleDownloadTranslation = useCallback(() => {
+    if (!translatedText) return;
+    const blob = new Blob([translatedText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const fileName = audioFile?.name.split('.').slice(0, -1).join('.') || 'traduccion';
+    link.download = `${fileName}_traduccion.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [translatedText, audioFile]);
+
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
@@ -93,7 +108,7 @@ const App: React.FC = () => {
               disabled={!audioFile || isLoading}
               className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none"
             >
-              {isLoading ? 'Procesando...' : 'Traducir Audio'}
+              {isLoading ? 'Procesando...' : 'Traducir Archivo'}
             </button>
           </div>
 
@@ -110,7 +125,11 @@ const App: React.FC = () => {
               <ResultCard title="Transcripción Original" text={transcribedText} />
             )}
             {translatedText && (
-              <ResultCard title="Traducción al Español" text={translatedText} />
+              <ResultCard 
+                title="Traducción al Español" 
+                text={translatedText} 
+                onDownloadClick={handleDownloadTranslation} 
+              />
             )}
           </div>
         </div>
